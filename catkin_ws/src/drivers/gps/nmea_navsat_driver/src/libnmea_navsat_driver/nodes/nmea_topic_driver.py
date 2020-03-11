@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 # Software License Agreement (BSD License)
 #
 # Copyright (c) 2013, Eric Perko
@@ -50,7 +51,7 @@ def nmea_sentence_callback(nmea_sentence, driver):
         driver.add_sentence(
             nmea_sentence.sentence,
             frame_id=nmea_sentence.header.frame_id,
-            timestamp=nmea_sentence.header.stamp)
+            timestamp=nmea_sentence.header.stamp)   #add_sentence()接收frame_id和时间戳，接收sentence并解析，发布解析后的时间，位置，以及速度信息。
     except ValueError as e:
         rospy.logwarn(
             "Value error, likely due to missing fields in the NMEA message. "
@@ -69,9 +70,9 @@ def main():
     """
     rospy.init_node('nmea_topic_driver')
 
-    driver = RosNMEADriver()
+    driver = RosNMEADriver()    #实例化RosNMEADriver()类
 
     rospy.Subscriber("nmea_sentence", Sentence, nmea_sentence_callback,
-                     driver)
+                     driver)    #订阅话题nmea_sentence，话题类型Sentence，回调函数nmea_sentence_callback，回调函数第二个参数driver。
 
     rospy.spin()

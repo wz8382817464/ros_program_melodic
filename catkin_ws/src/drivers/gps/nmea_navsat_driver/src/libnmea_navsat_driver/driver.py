@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 # Software License Agreement (BSD License)
 #
 # Copyright (c) 2013, Eric Perko
@@ -47,6 +48,7 @@ import libnmea_navsat_driver.parser
 class RosNMEADriver(object):
     """ROS driver for NMEA GNSS devices."""
 
+    #定义ros发布者，以及ros参数初始化。__init__函数，在类实例化的时候自动执行。
     def __init__(self):
         """Initialize the ROS NMEA driver.
 
@@ -140,6 +142,7 @@ class RosNMEADriver(object):
             ]
         }
 
+    #根据NMEA0184协议解析nmea_string，并将解析后的数据发布出来。
     def add_sentence(self, nmea_string, frame_id, timestamp=None):
         """Public method to provide a new NMEA sentence to the driver.
 

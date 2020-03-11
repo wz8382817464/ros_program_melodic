@@ -33,12 +33,12 @@
 
 """Defines the main method for the nmea_topic_serial_reader executable."""
 
-import serial
+import serial   #引入串口模块
 
-from nmea_msgs.msg import Sentence
-import rospy
+from nmea_msgs.msg import Sentence  #引入nmea_msgs/Sentence结构
+import rospy    #引入ROS的Python接口模块
 
-from libnmea_navsat_driver.driver import RosNMEADriver
+from libnmea_navsat_driver.driver import RosNMEADriver  #引入driver.py中的RosNMEADriver
 
 
 def main():
@@ -65,7 +65,7 @@ def main():
     frame_id = RosNMEADriver.get_frame_id()                 #设置frame_id
 
     try:
-        GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)      #调用python串口库Serial
+        GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)      #调用python串口模块Serial
         while not rospy.is_shutdown():
             data = GPS.readline().strip()         #从串口读入数据
 
