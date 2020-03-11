@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 # Software License Agreement (BSD License)
 #
 # Copyright (c) 2013, Eric Perko
@@ -53,27 +54,27 @@ def main():
         nmea_sentence (nmea_msgs.msg.Sentence): Publishes each line from the open serial device as a new
             message. The header's stamp is set to the rostime when the data is read from the serial device.
     """
-    rospy.init_node('nmea_topic_serial_reader')
+    rospy.init_node('nmea_topic_serial_reader')     #初始化ros节点名
 
-    nmea_pub = rospy.Publisher("nmea_sentence", Sentence, queue_size=1)
+    nmea_pub = rospy.Publisher("nmea_sentence", Sentence, queue_size=1)     #定义发布者
 
-    serial_port = rospy.get_param('~port', '/dev/ttyUSB0')
-    serial_baud = rospy.get_param('~baud', 4800)
+    serial_port = rospy.get_param('~port', '/dev/ttyUSB0')      #设置串口设备文件名
+    serial_baud = rospy.get_param('~baud', 4800)                #设置波特率
 
     # Get the frame_id
-    frame_id = RosNMEADriver.get_frame_id()
+    frame_id = RosNMEADriver.get_frame_id()                 #设置frame_id
 
     try:
-        GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
+        GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)      #调用python串口库Serial
         while not rospy.is_shutdown():
-            data = GPS.readline().strip()
+            data = GPS.readline().strip()         #从串口读入数据
 
-            sentence = Sentence()
-            sentence.header.stamp = rospy.get_rostime()
-            sentence.header.frame_id = frame_id
-            sentence.sentence = data
+            sentence = Sentence()       #创建nmea_msgs/Sentence结构变量sentence
+            sentence.header.stamp = rospy.get_rostime()     #设置sentence的时间戳，为当前时间
+            sentence.header.frame_id = frame_id             #设置sentence的frame_id
+            sentence.sentence = data                        #设置sentence的sentence变量。
 
-            nmea_pub.publish(sentence)
+            nmea_pub.publish(sentence)                      #发布sentence
 
-    except rospy.ROSInterruptException:
+    except rospy.ROSInterruptException:                     #异常处理
         GPS.close()  # Close GPS serial port
