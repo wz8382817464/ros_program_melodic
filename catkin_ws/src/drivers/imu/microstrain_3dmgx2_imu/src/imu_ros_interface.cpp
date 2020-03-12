@@ -35,7 +35,9 @@
 
 #include "microstrain_3dmgx2_imu/imu_ros_interface.h"
 
-  
+  /*
+  ImuNode构造函数，主要是ros初始化和参数初始化。
+  */
   ImuNode::ImuNode(ros::NodeHandle h) : self_test_(), diagnostic_(), 
   node_handle_(h), private_node_handle_("~"), calibrate_requested_(false),
   error_count_(0), 
@@ -43,14 +45,16 @@
   desired_freq_(100), 
   freq_diag_(diagnostic_updater::FrequencyStatusParam(&desired_freq_, &desired_freq_, 0.05))
   {
-    ros::NodeHandle imu_node_handle(node_handle_, "imu");
+    ros::NodeHandle imu_node_handle(node_handle_, "imu"); //定义NodeHandle
     
+    //初始化ros参数
     private_node_handle_.param("autocalibrate", autocalibrate_, true);
     private_node_handle_.param("assume_calibrated", calibrated_, false);
     private_node_handle_.param("port", port, string("/dev/ttyUSB0"));
     private_node_handle_.param("max_drift_rate", max_drift_rate_, 0.0002);
 
 
+    //定义ros发布者
     imu_data_pub_ = imu_node_handle.advertise<sensor_msgs::Imu>("data", 100);
     add_offset_serv_ = private_node_handle_.advertiseService("add_offset", &ImuNode::addOffset, this);
     calibrate_serv_ = imu_node_handle.advertiseService("calibrate", &ImuNode::calibrate, this);
@@ -64,19 +68,22 @@
 
     bias_x_ = bias_y_ = bias_z_ = 0;
 
+    //初始化ros参数
     private_node_handle_.param("frame_id", frameid_, string("imu"));
     reading.header.frame_id = frameid_;
-
     private_node_handle_.param("time_offset", offset_, 0.0);
 
+    //加速度，角速度和姿态方差
     private_node_handle_.param("linear_acceleration_stdev", linear_acceleration_stdev_, 0.098); 
     private_node_handle_.param("orientation_stdev", orientation_stdev_, 0.035); 
     private_node_handle_.param("angular_velocity_stdev", angular_velocity_stdev_, 0.012); 
 
+    //计算协方差
     double angular_velocity_covariance = angular_velocity_stdev_ * angular_velocity_stdev_;
     double orientation_covariance = orientation_stdev_ * orientation_stdev_;
     double linear_acceleration_covariance = linear_acceleration_stdev_ * linear_acceleration_stdev_;
     
+    //填充sensor_msgs/Imu中的协方差项
     reading.linear_acceleration_covariance[0] = linear_acceleration_covariance;
     reading.linear_acceleration_covariance[4] = linear_acceleration_covariance;
     reading.linear_acceleration_covariance[8] = linear_acceleration_covariance;
@@ -89,6 +96,7 @@
     reading.orientation_covariance[4] = orientation_covariance;
     reading.orientation_covariance[8] = orientation_covariance;
     
+    //设置测试程序
     self_test_.add("Close Test", this, &ImuNode::pretest);
     self_test_.add("Interruption Test", this, &ImuNode::InterruptionTest);
     self_test_.add("Connect Test", this, &ImuNode::ConnectTest);
@@ -99,6 +107,7 @@
     self_test_.add("Disconnect Test", this, &ImuNode::DisconnectTest);
     self_test_.add("Resume Test", this, &ImuNode::ResumeTest);
 
+    //设置诊断程序
     diagnostic_.add( freq_diag_ );
     diagnostic_.add( "Calibration Status", this, &ImuNode::calibrationStatus );
     diagnostic_.add( "IMU Status", this, &ImuNode::deviceStatus );
@@ -239,6 +248,7 @@
     return(0);
   }
 
+  //接受数据，解析数据，发布话题
   int ImuNode::publish_datum()
   {
     try
@@ -251,7 +261,8 @@
         was_slow_ = "Full IMU loop was slow.";
         slow_count_++;
       }
-      getData(reading);
+      //获取imu数据。
+      getData(reading);   
       double endtime = ros::Time::now().toSec();
       if (endtime - starttime > 0.05)
       {
@@ -261,6 +272,7 @@
       }
       prevtime = starttime;
       starttime = ros::Time::now().toSec();
+      //发布imu数据。
       imu_data_pub_.publish(reading);
       endtime = ros::Time::now().toSec();
       if (endtime - starttime > 0.05)
@@ -283,6 +295,9 @@
     return(0);
   }
 
+  /*
+  接受串口数据，解析并发布。
+  */
   bool ImuNode::spin()
   {
     while (!ros::isShuttingDown()) // Using ros::isShuttingDown to avoid restarting the node during a shutdown.
@@ -290,7 +305,7 @@
       if (start() == 0)
       {
         while(node_handle_.ok()) {
-          if(publish_datum() < 0)
+          if(publish_datum() < 0)       //接受串口数据，解析并发布。
             break;
           self_test_.checkTest();
           diagnostic_.update();
@@ -362,7 +377,7 @@
     status.add("Bias_Z", bias_z_);
   }
 
-
+  //从串口获取数据，并构建sensor_msgs::Imu数据结构。
   void ImuNode::getData(sensor_msgs::Imu& data)
   {
     uint64_t time;
@@ -370,7 +385,10 @@
     double angrate[3];
     double orientation[9];
 
+    //调用imu sdk中的receiveAccelAngrateOrientation函数，以此获取此帧imu的时间，加速度，角速度以及姿态数据。
     imu.receiveAccelAngrateOrientation(&time, accel, angrate, orientation);
+
+    //填充sensor_msgs::Imu中的加速度，角速度以及姿态数据。
     data.linear_acceleration.x = accel[0];
     data.linear_acceleration.y = accel[1];
     data.linear_acceleration.z = accel[2];
@@ -388,7 +406,8 @@
 		 orientation[2], orientation[5], orientation[8])).getRotation(quat);
     
     tf::quaternionTFToMsg(quat, data.orientation);
-      
+
+    //设置时间戳  
     data.header.stamp = ros::Time::now().fromNSec(time);
   }
 
@@ -576,16 +595,20 @@
     return true;
   }
 
+  /*
+  校验IMU。
+  */
   void ImuNode::doCalibrate()
   { // Expects to be called with the IMU stopped.
     ROS_INFO("Calibrating IMU gyros.");
-    imu.initGyros(&bias_x_, &bias_y_, &bias_z_);
+    imu.initGyros(&bias_x_, &bias_y_, &bias_z_);  //获取陀螺仪三轴的bias
     
     // check calibration
+    //设置imu进入continue模式
     if (!imu.setContinuous(microstrain_3dmgx2_imu::IMU::CMD_ACCEL_ANGRATE_ORIENT)){
       ROS_ERROR("Could not start streaming data to verify calibration");
     } 
-    else {
+    else {                //如果imu没有进入continue模式，就手动校验。
       double x_rate = 0.0;
       double y_rate = 0.0;
       double z_rate = 0.0;
@@ -593,6 +616,7 @@
       getData(reading);
       ros::Time start_time = reading.header.stamp;
 
+      //获取2s内的三轴角速度值。
       while(reading.header.stamp - start_time < ros::Duration(2.0)){
         getData(reading);
         x_rate += reading.angular_velocity.x;
@@ -601,13 +625,16 @@
         ++count;
       }
 
+      //计算角速度平均平方和
       double average_rate = sqrt(x_rate*x_rate + y_rate*y_rate + z_rate*z_rate) / count;
 
+      //检测2s内的采样次数
       if (count < 200){
         ROS_WARN("Imu: calibration check acquired fewer than 200 samples.");
       }
       
       // calibration succeeded
+      //如果平均平方和小于阈值max_drift_rate_，则表示校验成功。
       if (average_rate < max_drift_rate_) {
         ROS_INFO("Imu: calibration check succeeded: average angular drift %f mdeg/sec < %f mdeg/sec", average_rate*180*1000/M_PI, max_drift_rate_*180*1000/M_PI);
         calibrated_ = true;
