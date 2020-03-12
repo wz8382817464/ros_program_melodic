@@ -70,7 +70,7 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 add_library(3dmgx2 src/3dmgx2.cc)
 
 ## Declare a cpp executable
-add_executable(imu_node src/imu_node.cc)
+add_executable(imu_node src/imu_ros_node.cpp src/imu_ros_interface.cpp)
 target_link_libraries(imu_node 3dmgx2 ${catkin_LIBRARIES})
 add_dependencies(imu_node microstrain_3dmgx2_imu_gencpp)
 

@@ -33,80 +33,10 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <assert.h>
-#include <math.h>
-#include <iostream>
+#include "microstrain_3dmgx2_imu/imu_ros_interface.h"
 
-#include <boost/format.hpp>
-
-#include "microstrain_3dmgx2_imu/3dmgx2.h"
-
-#include "ros/time.h"
-#include "self_test/self_test.h"
-#include "diagnostic_msgs/DiagnosticStatus.h"
-#include "diagnostic_updater/diagnostic_updater.h"
-#include "diagnostic_updater/update_functions.h"
-#include "diagnostic_updater/DiagnosticStatusWrapper.h"
-
-#include "sensor_msgs/Imu.h"
-#include "std_srvs/Empty.h"
-
-#include "tf/transform_datatypes.h"
-#include "microstrain_3dmgx2_imu/AddOffset.h"
-
-#include "std_msgs/Bool.h"
-
-using namespace std;
-
-class ImuNode 
-{
-public:
-  microstrain_3dmgx2_imu::IMU imu;
-  sensor_msgs::Imu reading;
-
-  string port;
-
-  microstrain_3dmgx2_imu::IMU::cmd cmd;
-
-  self_test::TestRunner self_test_;
-  diagnostic_updater::Updater diagnostic_;
-
-  ros::NodeHandle node_handle_;
-  ros::NodeHandle private_node_handle_;
-  ros::Publisher imu_data_pub_;
-  ros::ServiceServer add_offset_serv_;
-  ros::ServiceServer calibrate_serv_;
-  ros::Publisher is_calibrated_pub_;
-
-  bool running;
-
-  bool autocalibrate_;
-  bool calibrate_requested_;
-  bool calibrated_;
   
-  int error_count_;
-  int slow_count_;
-  std::string was_slow_;
-  std::string error_status_;
-
-  string frameid_;
-  
-  double offset_;
-    
-  double bias_x_;
-  double bias_y_;
-  double bias_z_;
-
-  double angular_velocity_stdev_, angular_velocity_covariance_;
-  double linear_acceleration_covariance_, linear_acceleration_stdev_;
-  double orientation_covariance_, orientation_stdev_;
-
-  double max_drift_rate_;
-
-  double desired_freq_;
-  diagnostic_updater::FrequencyStatus freq_diag_;
-  
-  ImuNode(ros::NodeHandle h) : self_test_(), diagnostic_(), 
+  ImuNode::ImuNode(ros::NodeHandle h) : self_test_(), diagnostic_(), 
   node_handle_(h), private_node_handle_("~"), calibrate_requested_(false),
   error_count_(0), 
   slow_count_(0), 
@@ -174,12 +104,12 @@ public:
     diagnostic_.add( "IMU Status", this, &ImuNode::deviceStatus );
   }
 
-  ~ImuNode()
+  ImuNode::~ImuNode()
   {
     stop();
   }
 
-  void setErrorStatusf(const char *format, ...)
+  void ImuNode::setErrorStatusf(const char *format, ...)
   {
     va_list va;
     char buff[1000]; 
@@ -191,7 +121,7 @@ public:
   }
 
   // Prints an error message if it isn't the same old error message.
-  void setErrorStatus(const std::string msg)
+  void ImuNode::setErrorStatus(const std::string msg)
   {
     if (error_status_ != msg)
     {
@@ -204,12 +134,12 @@ public:
     }
   } 
 
-  void clearErrorStatus()
+  void ImuNode::clearErrorStatus()
   {
     error_status_.clear();
   }
 
-  int start()
+  int ImuNode::start()
   {
     stop();
 
@@ -263,7 +193,7 @@ public:
     return(0);
   }
       
-  std::string getID(bool output_info = false)
+  std::string ImuNode::getID(bool output_info)
   {
       char dev_name[17];
       char dev_model_num[17];
@@ -292,7 +222,7 @@ public:
       return (boost::format("%s_%s-%s")%dev_name_ptr%dev_model_num_ptr%dev_serial_num_ptr).str();
   }
   
-  int stop()
+  int ImuNode::stop()
   {
     if(running)
     {
@@ -309,7 +239,7 @@ public:
     return(0);
   }
 
-  int publish_datum()
+  int ImuNode::publish_datum()
   {
     try
     {
@@ -353,7 +283,7 @@ public:
     return(0);
   }
 
-  bool spin()
+  bool ImuNode::spin()
   {
     while (!ros::isShuttingDown()) // Using ros::isShuttingDown to avoid restarting the node during a shutdown.
     {
@@ -380,14 +310,14 @@ public:
     return true;
   }
 
-  void publish_is_calibrated()
+  void ImuNode::publish_is_calibrated()
   {
     std_msgs::Bool msg;
     msg.data = calibrated_;
     is_calibrated_pub_.publish(msg);
   }
 
-  void pretest(diagnostic_updater::DiagnosticStatusWrapper& status)
+  void ImuNode::pretest(diagnostic_updater::DiagnosticStatusWrapper& status)
   {
     try
     {
@@ -399,7 +329,7 @@ public:
     }
   }
 
-  void InterruptionTest(diagnostic_updater::DiagnosticStatusWrapper& status)
+  void ImuNode::InterruptionTest(diagnostic_updater::DiagnosticStatusWrapper& status)
   {
     if (imu_data_pub_.getNumSubscribers() == 0 )
       status.summary(0, "No operation interrupted.");
@@ -407,21 +337,21 @@ public:
       status.summary(1, "There were active subscribers.  Running of self test interrupted operations.");
   }
 
-  void ConnectTest(diagnostic_updater::DiagnosticStatusWrapper& status)
+  void ImuNode::ConnectTest(diagnostic_updater::DiagnosticStatusWrapper& status)
   {
     imu.openPort(port.c_str());
 
     status.summary(0, "Connected successfully.");
   }
 
-  void ReadIDTest(diagnostic_updater::DiagnosticStatusWrapper& status)
+  void ImuNode::ReadIDTest(diagnostic_updater::DiagnosticStatusWrapper& status)
   {
     self_test_.setID(getID());
     
     status.summary(0, "Read Successfully");
   }
 
-  void GyroBiasTest(diagnostic_updater::DiagnosticStatusWrapper& status)
+  void ImuNode::GyroBiasTest(diagnostic_updater::DiagnosticStatusWrapper& status)
   {
     imu.initGyros(&bias_x_, &bias_y_, &bias_z_);
 
@@ -433,7 +363,7 @@ public:
   }
 
 
-  void getData(sensor_msgs::Imu& data)
+  void ImuNode::getData(sensor_msgs::Imu& data)
   {
     uint64_t time;
     double accel[3];
@@ -463,7 +393,7 @@ public:
   }
 
 
-  void StreamedDataTest(diagnostic_updater::DiagnosticStatusWrapper& status)
+  void ImuNode::StreamedDataTest(diagnostic_updater::DiagnosticStatusWrapper& status)
   {
     uint64_t time;
     double accel[3];
@@ -485,7 +415,7 @@ public:
     }
   }
 
-  void GravityTest(diagnostic_updater::DiagnosticStatusWrapper& status)
+  void ImuNode::GravityTest(diagnostic_updater::DiagnosticStatusWrapper& status)
   {
     uint64_t time;
     double accel[3];
@@ -535,14 +465,14 @@ public:
     }
   }
 
-  void DisconnectTest(diagnostic_updater::DiagnosticStatusWrapper& status)
+  void ImuNode::DisconnectTest(diagnostic_updater::DiagnosticStatusWrapper& status)
   {
     imu.closePort();
 
     status.summary(0, "Disconnected successfully.");
   }
 
-  void ResumeTest(diagnostic_updater::DiagnosticStatusWrapper& status)
+  void ImuNode::ResumeTest(diagnostic_updater::DiagnosticStatusWrapper& status)
   {
     if (running)
     {
@@ -560,7 +490,7 @@ public:
     status.summary(0, "Previous operation resumed successfully.");    
   }
 
-  void deviceStatus(diagnostic_updater::DiagnosticStatusWrapper &status)
+  void ImuNode::deviceStatus(diagnostic_updater::DiagnosticStatusWrapper &status)
   {
     if (!running)
       status.summary(2, "IMU is stopped");
@@ -578,7 +508,7 @@ public:
     status.add("Excessive delay", slow_count_);
   }
 
-  void calibrationStatus(diagnostic_updater::DiagnosticStatusWrapper& status)
+  void ImuNode::calibrationStatus(diagnostic_updater::DiagnosticStatusWrapper& status)
   {
     if (calibrated_)
     {
@@ -594,7 +524,7 @@ public:
 
   }
 
-  bool addOffset(microstrain_3dmgx2_imu::AddOffset::Request &req, microstrain_3dmgx2_imu::AddOffset::Response &resp)
+  bool ImuNode::addOffset(microstrain_3dmgx2_imu::AddOffset::Request &req, microstrain_3dmgx2_imu::AddOffset::Response &resp)
   {
     double offset = req.add_offset;
     offset_ += offset;
@@ -614,7 +544,7 @@ public:
     return true;
   }
 
-  bool calibrate(std_srvs::Empty::Request &req, std_srvs::Empty::Response &resp)
+  bool ImuNode::calibrate(std_srvs::Empty::Request &req, std_srvs::Empty::Response &resp)
   {
     bool old_running = running;
 
@@ -646,7 +576,7 @@ public:
     return true;
   }
 
-  void doCalibrate()
+  void ImuNode::doCalibrate()
   { // Expects to be called with the IMU stopped.
     ROS_INFO("Calibrating IMU gyros.");
     imu.initGyros(&bias_x_, &bias_y_, &bias_z_);
@@ -694,17 +624,4 @@ public:
       imu.stopContinuous();
     }
   }
-};
 
-int
-main(int argc, char** argv)
-{
-  ros::init(argc, argv, "microstrain_3dmgx2_node");
-
-  ros::NodeHandle nh;
-
-  ImuNode in(nh);
-  in.spin();
-
-  return(0);
-}
