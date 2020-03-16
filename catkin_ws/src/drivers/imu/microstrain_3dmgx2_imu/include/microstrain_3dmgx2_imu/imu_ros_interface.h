@@ -55,17 +55,18 @@
 
 using namespace std;
 
+//基于IMU sdk封装的ros驱动接口类
 class ImuNode 
 {
 public:
-  ImuNode(ros::NodeHandle h);
+  ImuNode(ros::NodeHandle h);   //初始化ros和参数。
   ~ImuNode();
-  bool spin();
+  bool spin();                  //数据读取，数据解析，数据发布。
 
 private:
-  microstrain_3dmgx2_imu::IMU imu;
-  sensor_msgs::Imu reading;
-  string port;
+  microstrain_3dmgx2_imu::IMU imu;  //IMU sdk的封装接口
+  sensor_msgs::Imu reading;     //要发布的imu数据。
+  string port;                  //imu所对应的设备文件。
   microstrain_3dmgx2_imu::IMU::cmd cmd;
 
   self_test::TestRunner self_test_;

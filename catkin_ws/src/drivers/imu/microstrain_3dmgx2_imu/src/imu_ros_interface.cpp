@@ -36,7 +36,7 @@
 #include "microstrain_3dmgx2_imu/imu_ros_interface.h"
 
   /*
-  ImuNode构造函数，主要是ros初始化和参数初始化。
+  ImuNode构造函数，主要是ros初始化，参数初始化，设置协方差项。
   */
   ImuNode::ImuNode(ros::NodeHandle h) : self_test_(), diagnostic_(), 
   node_handle_(h), private_node_handle_("~"), calibrate_requested_(false),
