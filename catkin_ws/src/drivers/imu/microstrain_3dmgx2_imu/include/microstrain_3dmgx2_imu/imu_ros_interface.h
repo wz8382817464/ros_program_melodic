@@ -59,7 +59,7 @@ using namespace std;
 class ImuNode 
 {
 public:
-  ImuNode(ros::NodeHandle h);   //初始化ros和参数。
+  ImuNode(ros::NodeHandle h);   //初始化ros系统和参数。
   ~ImuNode();
   bool spin();                  //数据读取，数据解析，数据发布。
 
@@ -69,7 +69,7 @@ private:
   string port;                  //imu所对应的设备文件。
   microstrain_3dmgx2_imu::IMU::cmd cmd;
 
-  self_test::TestRunner self_test_;
+  self_test::TestRunner self_test_;         //测试
   diagnostic_updater::Updater diagnostic_;
   ros::NodeHandle node_handle_;
   ros::NodeHandle private_node_handle_;

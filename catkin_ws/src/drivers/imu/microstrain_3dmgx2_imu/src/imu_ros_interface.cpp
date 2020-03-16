@@ -97,6 +97,7 @@
     reading.orientation_covariance[8] = orientation_covariance;
     
     //设置测试程序
+    //self_test_通过实现ros提供的接口类TestRunner，增加测试程序。
     self_test_.add("Close Test", this, &ImuNode::pretest);
     self_test_.add("Interruption Test", this, &ImuNode::InterruptionTest);
     self_test_.add("Connect Test", this, &ImuNode::ConnectTest);
@@ -108,6 +109,7 @@
     self_test_.add("Resume Test", this, &ImuNode::ResumeTest);
 
     //设置诊断程序
+    //diagnostic_通过实现ros提供的接口类FrequencyStatus，增加诊断程序。
     diagnostic_.add( freq_diag_ );
     diagnostic_.add( "Calibration Status", this, &ImuNode::calibrationStatus );
     diagnostic_.add( "IMU Status", this, &ImuNode::deviceStatus );
@@ -248,23 +250,23 @@
     return(0);
   }
 
-  //接受数据，解析数据，发布话题
+  //接收数据，解析数据，发布话题
   int ImuNode::publish_datum()
   {
     try
     {
       static double prevtime = 0;
       double starttime = ros::Time::now().toSec();
-      if (prevtime && prevtime - starttime > 0.05)
+      if (prevtime && prevtime - starttime > 0.05)  //相当于检查此函数的执行周期，为10ms，如果花费50ms，则异常警告。
       {
         ROS_WARN("Full IMU loop took %f ms. Nominal is 10ms.", 1000 * (prevtime - starttime));
         was_slow_ = "Full IMU loop was slow.";
         slow_count_++;
       }
-      //获取imu数据。
+      //获取imu raw数据，根据硬件spec解析imu，然后填充ros imu数据结构。
       getData(reading);   
       double endtime = ros::Time::now().toSec();
-      if (endtime - starttime > 0.05)
+      if (endtime - starttime > 0.05) //检查获取一帧imu数据的时间,同上。
       {
         ROS_WARN("Gathering data took %f ms. Nominal is 10ms.", 1000 * (endtime - starttime));
         was_slow_ = "Full IMU loop was slow.";
@@ -272,10 +274,10 @@
       }
       prevtime = starttime;
       starttime = ros::Time::now().toSec();
-      //发布imu数据。
+      //发布ros imu数据。
       imu_data_pub_.publish(reading);
       endtime = ros::Time::now().toSec();
-      if (endtime - starttime > 0.05)
+      if (endtime - starttime > 0.05)     //检查发布一帧IMU数据时间，预计发布一帧为10ms，如果花费50ms，则异常警告。
       {
         ROS_WARN("Publishing took %f ms. Nominal is 10 ms.", 1000 * (endtime - starttime));
         was_slow_ = "Full IMU loop was slow.";
@@ -302,7 +304,7 @@
   {
     while (!ros::isShuttingDown()) // Using ros::isShuttingDown to avoid restarting the node during a shutdown.
     {
-      if (start() == 0)
+      if (start() == 0)     //串口初始化，打开串口，为读数据做准备。
       {
         while(node_handle_.ok()) {
           if(publish_datum() < 0)       //接受串口数据，解析并发布。
@@ -377,7 +379,7 @@
     status.add("Bias_Z", bias_z_);
   }
 
-  //从串口获取数据，并构建sensor_msgs::Imu数据结构。
+  //从串口获取数据，解析之后，构建sensor_msgs::Imu数据结构。
   void ImuNode::getData(sensor_msgs::Imu& data)
   {
     uint64_t time;
