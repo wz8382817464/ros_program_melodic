@@ -15,6 +15,9 @@
 #include "velodyne_pointcloud/convert.h"
 
 /** Main node entry point. */
+/*
+订阅话题/velodyne_packets，解析封装为sensor_msgs::PointCloud2结构，发布话题：velodyne_points。
+*/
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "cloud_node");

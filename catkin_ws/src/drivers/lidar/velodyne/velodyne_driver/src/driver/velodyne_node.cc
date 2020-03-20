@@ -35,7 +35,10 @@
  *  ROS driver node for the Velodyne 3D LIDARs.
  */
 
-//从网口读入lidar raw数据，封装为自定义ros msg：velodyne_msgs/VelodyneScan，以话题：/velodyne_packets，发布。
+/*
+1. 这是velodyne激光雷达ros驱动第一个节点。
+2. 功能：从网口读入lidar raw数据，封装为自定义msg格式：velodyne_msgs/VelodyneScan，以话题：/velodyne_packets，发布。
+*/
 
 #include <ros/ros.h>
 #include "velodyne_driver/driver.h"
@@ -47,13 +50,13 @@ int main(int argc, char** argv)
   ros::NodeHandle private_nh("~");
 
   // start the driver
-  velodyne_driver::VelodyneDriver dvr(node, private_nh);
+  velodyne_driver::VelodyneDriver dvr(node, private_nh);  //实例化VelodyneDriver，调用VelodyneDriver的构造函数。
 
   // loop until shut down or end of file
   while(ros::ok())
     {
       // poll device until end of file
-      bool polled_ = dvr.poll();
+      bool polled_ = dvr.poll();                    //读取，处理，发布lidar 数据。
       if (!polled_)
         ROS_ERROR_THROTTLE(1.0, "Velodyne - Failed to poll device.");
 

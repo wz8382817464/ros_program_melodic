@@ -32,7 +32,7 @@
 
 #include <ros/ros.h>
 #include "velodyne_laserscan/velodyne_laserscan.h"
-
+//velodyne_laserscan_node节点，订阅点云话题：velodyne_points，转化为sensor_msgs::LaserScan类型，以话题scan发布出来。
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "velodyne_laserscan_node");

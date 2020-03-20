@@ -47,6 +47,10 @@
 namespace velodyne_driver
 {
 
+/*
+1. 构造函数。
+2. 功能：配置lidar参数，创建诊断程序，创建socket，创建发布者。
+*/
 VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
                                ros::NodeHandle private_nh,
                                std::string const & node_name)
@@ -168,17 +172,18 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
 
   config_.enabled = true;
 
-  //读取lidar raw 数据
   // open Velodyne input device or file
   if (dump_file != "")                  // have PCAP file?
     {
       // read data from packet capture file
+      //从pcap文件读数据。
       input_.reset(new velodyne_driver::InputPCAP(private_nh, udp_port,
                                                   packet_rate, dump_file));
     }
   else
     {
       // read data from live socket
+      //创建读取lidar raw 数据socket。
       input_.reset(new velodyne_driver::InputSocket(private_nh, udp_port));
     }
 
@@ -194,6 +199,9 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
  *
  *  @returns true unless end of file reached
  */
+/*
+从网口读取lidar raw数据，封装为velodyne_msgs/VelodynePacket结构，再以此组装为velodyne_msgs/VelodyneScan结构，发布出来。
+*/
 bool VelodyneDriver::poll(void)
 {
   if (!config_.enabled) {
@@ -214,11 +222,11 @@ bool VelodyneDriver::poll(void)
     {
       while(true)
       {
-        int rc = input_->getPacket(&tmp_packet, config_.time_offset);
+        int rc = input_->getPacket(&tmp_packet, config_.time_offset); //从网口读取lidar raw数据，封装为velodyne_msgs/VelodynePacket结构
         if (rc == 0) break;       // got a full packet?
         if (rc < 0) return false; // end of file reached?
       }
-      scan->packets.push_back(tmp_packet);
+      scan->packets.push_back(tmp_packet);        //组装为velodyne_msgs/VelodyneScan结构
 
       // Extract base rotation of first block in packet
       std::size_t azimuth_data_pos = 100*0+2;
@@ -258,14 +266,15 @@ bool VelodyneDriver::poll(void)
 
   // publish message using time of last packet read
   ROS_DEBUG("Publishing a full Velodyne scan.");
+  //设置header中的stamp，取最前和最后packet的平均时间。
   if (config_.timestamp_first_packet){
     scan->header.stamp = scan->packets.front().stamp;
   }
   else{
     scan->header.stamp = scan->packets.back().stamp;
   }
-  scan->header.frame_id = config_.frame_id;
-  output_.publish(scan);
+  scan->header.frame_id = config_.frame_id;   //设置frame_id
+  output_.publish(scan);    //发布scan数据。
 
   // notify diagnostics that a message has been published, updating
   // its status

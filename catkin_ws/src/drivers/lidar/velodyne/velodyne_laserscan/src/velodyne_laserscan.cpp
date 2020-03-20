@@ -36,10 +36,14 @@
 namespace velodyne_laserscan
 {
 
+//订阅点云话题：velodyne_points，转化为sensor_msgs::LaserScan类型，以话题scan发布出来。
 VelodyneLaserScan::VelodyneLaserScan(ros::NodeHandle &nh, ros::NodeHandle &nh_priv) :
     nh_(nh), srv_(nh_priv), ring_count_(0)
 {
   ros::SubscriberStatusCallback connect_cb = boost::bind(&VelodyneLaserScan::connectCb, this);
+
+  //创建发布者，注意后面两个参数connect_cb表示，此话题与订阅节点建立连接时，自动执行connect_cb中的回调函数connectCb。
+  //此话题与订阅节点断开连接时，也自动执行connect_cb中的回调函数connectCb。
   pub_ = nh.advertise<sensor_msgs::LaserScan>("scan", 10, connect_cb, connect_cb);
 
   srv_.setCallback(boost::bind(&VelodyneLaserScan::reconfig, this, _1, _2));
@@ -48,16 +52,17 @@ VelodyneLaserScan::VelodyneLaserScan(ros::NodeHandle &nh, ros::NodeHandle &nh_pr
 void VelodyneLaserScan::connectCb()
 {
   boost::lock_guard<boost::mutex> lock(connect_mutex_);
-  if (!pub_.getNumSubscribers())
+  if (!pub_.getNumSubscribers())    //表示没有节点订阅scan话题，此时关闭订阅者。
   {
     sub_.shutdown();
   }
-  else if (!sub_)
+  else if (!sub_)                   //表示有节点订阅scan话题。此时订阅velodyne_points话题。
   {
     sub_ = nh_.subscribe("velodyne_points", 10, &VelodyneLaserScan::recvCallback, this);
   }
 }
 
+//在回调函数recvCallback中，完成velodyne_points到sensor_msgs::LaserScan转化，并话题scan发布出来。
 void VelodyneLaserScan::recvCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
 {
   // Latch ring count
@@ -165,6 +170,7 @@ void VelodyneLaserScan::recvCallback(const sensor_msgs::PointCloud2ConstPtr& msg
   }
 
   // Construct LaserScan message
+  //构建scan数据。
   if ((offset_x >= 0) && (offset_y >= 0) && (offset_r >= 0))
   {
     const float RESOLUTION = std::abs(cfg_.resolution);
@@ -264,7 +270,7 @@ void VelodyneLaserScan::recvCallback(const sensor_msgs::PointCloud2ConstPtr& msg
       }
     }
 
-    pub_.publish(scan);
+    pub_.publish(scan);     //发布scan数据。
   }
   else
   {

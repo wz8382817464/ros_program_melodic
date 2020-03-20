@@ -264,6 +264,9 @@ inline float SQR(float val) { return val*val; }
    *  @param pkt raw packet to unpack
    *  @param pc shared pointer to point cloud (points are appended)
    */
+  /*
+  1. 完成velodyne_msgs::VelodynePacket结构转化sensor_msgs/PointCloud2结构。
+  */
   void RawData::unpack(const velodyne_msgs::VelodynePacket &pkt, DataContainerBase& data, const ros::Time& scan_start_time)
   {
     using velodyne_pointcloud::LaserCorrection;

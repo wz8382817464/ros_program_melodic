@@ -34,6 +34,9 @@ namespace velodyne_pointcloud
   };
 
   /** @brief Nodelet initialization. */
+  /*
+  在本nodelet加载的时候，自动执行。在构造函数中，完成程序所有准备工作，可以参考cloud_node.cc。
+  */
   void CloudNodelet::onInit()
   {
     conv_.reset(new Convert(getNodeHandle(), getPrivateNodeHandle(), getName()));

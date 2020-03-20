@@ -21,11 +21,13 @@
 namespace velodyne_pointcloud
 {
   /** @brief Constructor. */
+  //构造函数：初始化ros参数，定义发布者，订阅velodyne_packets话题，在其回调函数中，发布话题：velodyne_points
   Convert::Convert(ros::NodeHandle node, ros::NodeHandle private_nh, std::string const & node_name):
     data_(new velodyne_rawdata::RawData()), first_rcfg_call(true),
     diagnostics_(node, private_nh, node_name)
   {
     // Get startup parameters
+    //设置ros参数。
     private_nh.param<std::string>("fixed_frame", config_.fixed_frame, "velodyne");
     private_nh.param<std::string>("target_Frame", config_.target_frame, "velodyne");
     private_nh.param<double>("min_range", config_.min_range, 10.0);
@@ -60,6 +62,7 @@ namespace velodyne_pointcloud
 
 
     // advertise output point cloud (before subscribing to input data)
+    //定义点云数据发布者
     output_ =
       node.advertise<sensor_msgs::PointCloud2>("velodyne_points", 10);
 
@@ -71,6 +74,7 @@ namespace velodyne_pointcloud
     srv_->setCallback (f);
 
     // subscribe to VelodyneScan packets
+    //定义velodyne_packets话题的订阅者。
     velodyne_scan_ =
       node.subscribe("velodyne_packets", 10,
                      &Convert::processScan, (Convert *) this,
@@ -126,6 +130,7 @@ namespace velodyne_pointcloud
   }
 
   /** @brief Callback for raw scan messages. */
+  //将velodyne_msgs::VelodyneScan类型解析为sensor_msgs/PointCloud2类型，使用container_ptr_引用，然后发布出来。
   void Convert::processScan(const velodyne_msgs::VelodyneScan::ConstPtr &scanMsg)
   {
     if (output_.getNumSubscribers() == 0)         // no one listening?
@@ -136,6 +141,7 @@ namespace velodyne_pointcloud
     container_ptr_->setup(scanMsg);
 
     // process each packet provided by the driver
+    //将velodyne_msgs::VelodyneScan类型解析为sensor_msgs/PointCloud2类型，使用container_ptr_引用
     for (size_t i = 0; i < scanMsg->packets.size(); ++i)
     {
       data_->unpack(scanMsg->packets[i], *container_ptr_, scanMsg->header.stamp);
@@ -144,6 +150,7 @@ namespace velodyne_pointcloud
     // publish the accumulated cloud message
     diag_topic_->tick(scanMsg->header.stamp);
     diagnostics_.update();
+    //将解析后的数据发布出来。
     output_.publish(container_ptr_->finishCloud());
   }
 

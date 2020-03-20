@@ -77,6 +77,9 @@ private:
   boost::shared_ptr<VelodyneDriver> dvr_; ///< driver implementation class
 };
 
+//nodelet启动时，默认执行此函数，此函数实例化VelodyneDriver，并新开一个线程，执行dvr_->poll()，
+//这两个函数实现ros激光雷达raw数据接收，处理与发布，具体可以参考velodyne_node.cc
+//这里只是将node节点转化为nodelet，转化方式可以参考前篇。
 void DriverNodelet::onInit()
 {
   // start the driver

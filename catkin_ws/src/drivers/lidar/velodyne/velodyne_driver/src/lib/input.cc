@@ -196,6 +196,7 @@ namespace velodyne_driver
 
         // Receive packets that should now be available from the
         // socket using a blocking read.
+        //从socket读取数据。
         ssize_t nbytes = recvfrom(sockfd_, &pkt->data[0],
                                   packet_size,  0,
                                   (sockaddr*) &sender_address,
@@ -226,6 +227,7 @@ namespace velodyne_driver
                          << nbytes << " bytes");
       }
 
+    //设置packet的时间戳，有gps，使用gps授时；没有gps，取读取packet的开始和结束时间的平均时间。
     if (!gps_time_) {
       // Average the times at which we begin and end reading.  Use that to
       // estimate when the scan occurred. Add the time offset.
