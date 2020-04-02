@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: UTF-8 -*-
 
 #---------------------------------------------------------------------------#
 # The following code is used to listen to a UDP multicast broadcast from an
@@ -34,7 +35,7 @@ class online_extract_radar(object):
 		MCAST_GRP = '225.0.0.1' #multicast group
 		MCAST_PORT = 31122 #multicast port
 		IS_ALL_GROUPS = True
-		interfaceIP = struct.unpack(">L", socket.inet_aton('192.168.1.30'))[0] # radar IP
+		interfaceIP = struct.unpack(">L", socket.inet_aton('10.0.2.15'))[0] # radar IP
 		rospy.loginfo(interfaceIP)
 
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -48,7 +49,7 @@ class online_extract_radar(object):
 		else:
 			# on this port, listen ONLY to MCAST_GRP
 			self.sock.bind((MCAST_GRP, MCAST_PORT))
-		host = '192.168.1.30'
+		host = '10.0.2.15'
 	
 		rospy.loginfo('host: ' + host) #prints in terminal
 		self.sock.setsockopt(socket.SOL_IP, socket.IP_MULTICAST_IF, socket.inet_aton(host))
@@ -79,12 +80,16 @@ class online_extract_radar(object):
 
 if __name__ == '__main__':
 	rospy.init_node('Reader') #create node
-	reader = online_extract_radar() #create instance
+	# 创建socket
+	reader = online_extract_radar() #create instance	
 	try:
 		while not rospy.is_shutdown():
 			try:
+				# 从socket读取radar raw数据
 				data, addr = reader.sock.recvfrom(1500) #receive data with a buffer of 1500 bytes
+				# 将radar raw 数据转化为十六进制数据
 				hexdata = binascii.hexlify(data)
+				# 解析radar 数据，获得距离，方位角，俯仰角，速度，雷达散射截面，距离方差，方位角方差，速度方差，信噪比，有效包数
 				#call custom conversion function
 				(ranges, azimuths, elevations, vels,  rcss, range_vars, az_vars, el_vars, vel_vars, snrs, actual_packet_count) = convert_all_radar(hexdata, 0,0)
 				#publish data

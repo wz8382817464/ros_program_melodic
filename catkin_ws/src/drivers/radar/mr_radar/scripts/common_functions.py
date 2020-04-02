@@ -1,4 +1,5 @@
 #modules for ethernet connection to the radar
+# -*- coding: UTF-8 -*-
 import socket
 import struct
 import binascii
@@ -40,6 +41,7 @@ def strip_binary(raw_hex_string):
 	return raw_hex_string[2:-1]
 
 # converts the non-scan data of the detection packets
+# 将十六进制raw data存储在non_scan_dictionary，便于后续使用，这里的解析需要根据设备spec解析，不同的radar，这里应该也不一样。
 def convert_non_scan(hexdata, save_formatted_data):
 
 	#creates a dictionary to store all the values so that they can be called if necessary when processing the scan data
