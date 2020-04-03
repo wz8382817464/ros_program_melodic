@@ -35,7 +35,8 @@ class online_extract_radar(object):
 		MCAST_GRP = '225.0.0.1' #multicast group
 		MCAST_PORT = 31122 #multicast port
 		IS_ALL_GROUPS = True
-		interfaceIP = struct.unpack(">L", socket.inet_aton('10.0.2.15'))[0] # radar IP
+		#实际使用时，这里需要填写radar 实际ip，这里只是为了能够运行节点，改为本地地址。
+		interfaceIP = struct.unpack(">L", socket.inet_aton('127.0.0.1'))[0] # radar IP
 		rospy.loginfo(interfaceIP)
 
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -49,7 +50,8 @@ class online_extract_radar(object):
 		else:
 			# on this port, listen ONLY to MCAST_GRP
 			self.sock.bind((MCAST_GRP, MCAST_PORT))
-		host = '10.0.2.15'
+		# 这里也应该是radar ip地址。
+		host = '127.0.0.1'
 	
 		rospy.loginfo('host: ' + host) #prints in terminal
 		self.sock.setsockopt(socket.SOL_IP, socket.IP_MULTICAST_IF, socket.inet_aton(host))

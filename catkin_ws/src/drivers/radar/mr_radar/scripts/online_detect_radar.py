@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: UTF-8 -*-
 
 #---------------------------------------------------------------------------#
 # The following code is used to parse the radar data to verify if an obstacle
@@ -69,17 +70,22 @@ class online_detect_radar(object):
 			
 if __name__ == '__main__':
 	rospy.init_node('Detection') #create node
+	# 实例化online_detect_radar对象detector，调用__init__函数，创建发布者和订阅者
 	detector = online_detect_radar() #create instance
 	flag_raised = 0 #default value
 	try:
 		while not rospy.is_shutdown():
-
+			# 当订阅话题有数据时，detector.updated为true，if成立。
 			if detector.updated: #when a new packet is published on /radar_data
 				#call detection function
+				# 根据订阅到的消息，计算目标个数detector.flag_counter
 				(detector.flag_counter) = flag_counter(detector.ranges, detector.azimuths, detector.elevations, detector.rcss, detector.rel_vels, detector.flag_counter,detector.snrs)    
+				# 将detector.flag_counter转化为布尔型。
 				flag_raised = bin_flag(detector.flag_counter)
+				# detector.updated置为False，等待下次订阅话题的数据到来。 
 				detector.updated = False
 			#if verified obstacle
+			# 当检测到目标时，flag_raised为True，将之发布出去。
 			if (flag_raised):
 				detector.pub(flag_raised) #publish to binary topic
 				flag_raised = 0

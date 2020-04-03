@@ -426,6 +426,7 @@ def convert_all_radar(hexdata, save_formatted_data, save_raw_data):
 		all_packets.write(print_string)
 		all_packets.close()
 	stripped_hex_string = raw_hex_string
+	#convert_non_scan函数，对radar raw数据进行解析，获取非scan数据。
 	non_scan_dictionary = convert_non_scan(stripped_hex_string, save_formatted_data)
 	headerID = non_scan_dictionary.get("headerID")
 
@@ -465,6 +466,7 @@ def convert_all_radar(hexdata, save_formatted_data, save_raw_data):
 			far_0_raw.write(print_string)
 			far_0_raw.close()
 		
+		# convert_scan函数解析scan数据。
 		(ranges, azimuths, elevations, vels,  rcss, range_vars, az_vars, el_vars, vel_vars, snrs, actual_packet_count) = convert_scan(stripped_hex_string, "far_0_radar_data.csv", num_detections, save_formatted_data)
 
 	#far 1 event

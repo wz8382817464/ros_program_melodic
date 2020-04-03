@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import numpy as np 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -50,9 +51,11 @@ def xyz_scatter_plot(x, y, z, rcs):
 	# fig.canvas.draw()
 	# curr_path.remove()
 
-
+# 将极坐标转换为笛卡尔坐标，然后设置距离和横截面积的阈值，进行滤波，滤波之后，计算目标个数。
+# 这里的参数可能是根据radar设备的经验值。
 def flag_counter(range1, azimuth1, elevation1, rcs1, rvel1, flag_counter, SNR):
 	# Define stopping thresholds
+	# 极坐标系转化为笛卡尔坐标系，可以参考上篇中的radar的数学模型
 	(x, y, z) = spherical_to_3D(range1, azimuth1, elevation1)
 
 	k2 = 0.0637 # Constant to reduce x threshold for higher reltive velocity
